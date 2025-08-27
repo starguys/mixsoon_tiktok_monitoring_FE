@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, Gift, DollarSign, Eye, TrendingUp, Zap } from "lucide-react";
+import { Upload, Gift, DollarSign, Eye, Zap } from "lucide-react";
 import { KPICard } from "../components/KPICard";
 import { FilterBar } from "../components/FilterBar";
 import { ChartSection } from "../components/ChartSection";
@@ -44,12 +44,6 @@ export default function Dashboard() {
                 시딩한 컨텐츠들의 퍼포먼스 모니터링 & 트래킹
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">마지막 업데이트</p>
-              <p className="text-sm font-medium text-gray-900">
-                {new Date().toLocaleString("ko-KR")}
-              </p>
-            </div>
           </div>
         </div>
       </header>
@@ -66,6 +60,7 @@ export default function Dashboard() {
 
         {/* KPI 카드 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-3"></div>
           <KPICard
             title="업로드 갯수"
             value={mockKPIData.totalUploads}
@@ -100,13 +95,6 @@ export default function Dashboard() {
             icon={Zap}
             trend={{ value: 25, isPositive: true }}
             description="10K, 100K, 1M 이상 조회수 콘텐츠"
-          />
-          <KPICard
-            title="성장률"
-            value="+18.5%"
-            icon={TrendingUp}
-            trend={{ value: 18.5, isPositive: true }}
-            description="전월 대비 성장률"
           />
         </div>
 
