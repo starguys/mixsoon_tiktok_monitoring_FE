@@ -38,5 +38,6 @@ export interface TierData {
   averageViews: number;
 }
 
-export type TimeFilter = "all" | "today" | "week" | "month";
-export type LanguageFilter = "all" | "ko" | "en" | "es";
+export type TimeFilter = "ALL" | "1" | "7" | "30" | "365" | "72" | "48" | "24";
+export type LanguageFilter = "ALL" | "en" | "es" | "ko";
+export type TierFilter = "ALL" | "NANO" | "MICRO" | "MID" | "MEGA";

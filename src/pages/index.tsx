@@ -1,20 +1,43 @@
 import React, { useState } from "react";
 import { Upload, Gift, DollarSign, Eye, Zap } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { KPICard } from "../components/KPICard";
 import { FilterBar } from "../components/FilterBar";
 import { ChartSection } from "../components/ChartSection";
 import { ExplodedContentCard } from "../components/ExplodedContentCard";
+import { SkeletonCard } from "../components/SkeletonCard";
+import { fetchDailyMetrics } from "../api/metrics";
 import {
-  mockKPIData,
   mockChartData,
   mockTierData,
   mockTikTokContents,
 } from "../data/mockData";
-import { TimeFilter, LanguageFilter } from "../types/tiktok";
+import { TimeFilter, LanguageFilter, TierFilter } from "../types/tiktok";
 
 export default function Dashboard() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
-  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
+  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("ALL");
+  const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
+
+  // API 데이터 가져오기
+  const {
+    data: metricsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["dailyMetrics", timeFilter, languageFilter, tierFilter],
+    queryFn: () => {
+      const isHourly = ["72", "48", "24"].includes(timeFilter);
+
+      return fetchDailyMetrics({
+        days:
+          timeFilter === "ALL" ? undefined : isHourly ? undefined : timeFilter,
+        hours: isHourly ? timeFilter : undefined,
+        language: languageFilter === "ALL" ? undefined : languageFilter,
+        tier: tierFilter === "ALL" ? undefined : tierFilter,
+      });
+    },
+  });
 
   // 터진 콘텐츠만 필터링 (exploded_bucket이 있는 것들)
   const explodedContents = mockTikTokContents.filter(
@@ -29,6 +52,18 @@ export default function Dashboard() {
     }
     return num.toString();
   };
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">데이터를 불러오는데 실패했습니다.</p>
+          <p className="text-gray-600 text-sm">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,70 +89,123 @@ export default function Dashboard() {
         <FilterBar
           timeFilter={timeFilter}
           languageFilter={languageFilter}
+          tierFilter={tierFilter}
           onTimeFilterChange={setTimeFilter}
           onLanguageFilterChange={setLanguageFilter}
+          onTierFilterChange={setTierFilter}
         />
 
         {/* KPI 카드 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-3"></div>
-          <KPICard
-            title="업로드 갯수"
-            value={mockKPIData.totalUploads}
-            icon={Upload}
-            trend={{ value: 12, isPositive: true }}
-            description="선택된 기간 동안의 총 업로드 수"
-          />
-          <KPICard
-            title="무료 협찬수"
-            value={mockKPIData.freeSponsorships}
-            icon={Gift}
-            trend={{ value: 8, isPositive: true }}
-            description="무료 제품 제공 협찬 콘텐츠"
-          />
-          <KPICard
-            title="유료 협찬수"
-            value={mockKPIData.paidSponsorships}
-            icon={DollarSign}
-            trend={{ value: 15, isPositive: true }}
-            description="유료 협찬 콘텐츠"
-          />
-          <KPICard
-            title="평균 조회수"
-            value={formatNumber(mockKPIData.averageViews)}
-            icon={Eye}
-            trend={{ value: 5, isPositive: true }}
-            description="전체 콘텐츠의 평균 조회수"
-          />
-          <KPICard
-            title="터진 콘텐츠수"
-            value={mockKPIData.explodedContent}
-            icon={Zap}
-            trend={{ value: 25, isPositive: true }}
-            description="10K, 100K, 1M 이상 조회수 콘텐츠"
-          />
+          {isLoading ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : (
+            <>
+              <KPICard
+                title="업로드 갯수"
+                value={metricsData?.uploads || 0}
+                icon={Upload}
+                trend={{ value: 12, isPositive: true }}
+                description="선택된 기간 동안의 총 업로드 수"
+              />
+              <KPICard
+                title="무료 협찬수"
+                value={metricsData?.prFree || 0}
+                icon={Gift}
+                trend={{ value: 8, isPositive: true }}
+                description="무료 제품 제공 협찬 콘텐츠"
+              />
+              <KPICard
+                title="유료 협찬수"
+                value={metricsData?.prPaid || 0}
+                icon={DollarSign}
+                trend={{ value: 15, isPositive: true }}
+                description="유료 협찬 콘텐츠"
+              />
+              <KPICard
+                title="평균 조회수"
+                value={metricsData?.viewsAvg?.toLocaleString() || "0"}
+                icon={Eye}
+                trend={{ value: 5, isPositive: true }}
+                description="전체 콘텐츠의 평균 조회수"
+              />
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">
+                      터진 콘텐츠
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {(metricsData?.gte10k || 0) +
+                        (metricsData?.gte100k || 0) +
+                        (metricsData?.gte1m || 0)}
+                    </p>
+                  </div>
+                  <div className="bg-orange-50 p-3 rounded-lg">
+                    <Zap className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div className="flex gap-6">
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">
+                      {metricsData?.gte10k || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">10K+</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">
+                      {metricsData?.gte100k || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">100K+</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900">
+                      {metricsData?.gte1m || 0}
+                    </p>
+                    <p className="text-xs text-gray-600">1M+</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 차트 섹션 */}
-        <div className="mb-8">
-          <ChartSection chartData={mockChartData} tierData={mockTierData} />
-        </div>
+        {!isLoading && (
+          <div className="mb-8">
+            <ChartSection chartData={mockChartData} tierData={mockTierData} />
+          </div>
+        )}
 
         {/* 터진 콘텐츠 섹션 */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">터진 콘텐츠</h3>
-            <p className="text-sm text-gray-600">
-              총 {explodedContents.length}개의 터진 콘텐츠
-            </p>
-          </div>
+        {!isLoading && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                터진 콘텐츠
+              </h3>
+              <p className="text-sm text-gray-600">
+                총 {explodedContents.length}개의 터진 콘텐츠
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {explodedContents.map((content) => (
-              <ExplodedContentCard key={content.content_id} content={content} />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {explodedContents.map((content) => (
+                <ExplodedContentCard
+                  key={content.content_id}
+                  content={content}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
