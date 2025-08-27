@@ -1,4 +1,4 @@
-import { TikTokContent, KPIData, ChartData, TierData } from "../types/tiktok";
+import { TikTokContent, TierData } from "../types/tiktok";
 
 export const mockTikTokContents: TikTokContent[] = [
   {

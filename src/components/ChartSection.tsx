@@ -1,8 +1,6 @@
 import React from "react";
 import {
-  LineChart,
   Line,
-  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -12,36 +10,28 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import {
-  ChartData,
-  TierData,
-  HourlyData,
-  DailyMetricsResponse,
-} from "../types/tiktok";
+import { ChartData, TierData } from "../types/tiktok";
 
 interface ChartSectionProps {
   chartData: ChartData[];
   tierData: TierData[];
-  hourlyData?: HourlyData[];
   isHourly?: boolean;
 }
 
 export function ChartSection({
   chartData,
   tierData,
-  hourlyData,
   isHourly,
 }: ChartSectionProps) {
-  const formatViews = (value: number) => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`;
-    } else if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}K`;
-    }
-    return value.toString();
-  };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: Array<{ color: string; name: string; value: number }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       const formatTime = (timeStr: string) => {
         if (isHourly) {
@@ -62,8 +52,8 @@ export function ChartSection({
 
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium">{formatTime(label)}</p>
-          {payload.map((entry: any, index: number) => (
+          <p className="font-medium">{label ? formatTime(label) : ""}</p>
+          {payload.map((entry, index: number) => (
             <p key={index} style={{ color: entry.color }}>
               {entry.name}: {entry.value}
             </p>
@@ -99,7 +89,7 @@ export function ChartSection({
             <Legend />
             <Bar
               yAxisId="left"
-              dataKey={isHourly ? "hourlyUploads" : "uploads"}
+              dataKey={"uploads"}
               fill="#3B82F6"
               name="업로드 수"
               radius={[4, 4, 0, 0]}
@@ -107,7 +97,7 @@ export function ChartSection({
             <Line
               yAxisId="right"
               type="monotone"
-              dataKey={isHourly ? "hourlyViewsAvg" : "averageViews"}
+              dataKey={"averageViews"}
               stroke="#EF4444"
               strokeWidth={2}
               name="평균 조회수"

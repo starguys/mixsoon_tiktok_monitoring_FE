@@ -1,6 +1,7 @@
 import React from "react";
 import { ExplodedContent } from "../types/tiktok";
-import { Eye, Heart, ExternalLink } from "lucide-react";
+import { Eye, Heart } from "lucide-react";
+import Image from "next/image";
 
 interface ExplodedContentCardProps {
   content: ExplodedContent;
@@ -33,10 +34,11 @@ export function ExplodedContentCard({ content }: ExplodedContentCardProps) {
     >
       <div className="aspect-video bg-gray-100 relative">
         {content.thumbnailUrl ? (
-          <img
+          <Image
             src={content.thumbnailUrl}
             alt={content.caption}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">

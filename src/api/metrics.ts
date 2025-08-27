@@ -1,3 +1,10 @@
+import {
+  HourlyChartResponse,
+  DailyChartResponse,
+  TierResponse,
+  ExplodedContentResponse,
+} from "../types/tiktok";
+
 export interface DailyMetricsResponse {
   uploads: number;
   prFree: number;
@@ -39,7 +46,7 @@ export async function fetchDailyMetrics(
 
 export async function fetchHourlyData(
   params?: MetricsParams
-): Promise<HourlyData[]> {
+): Promise<HourlyChartResponse[]> {
   const searchParams = new URLSearchParams();
 
   if (params?.hours) searchParams.append("hours", params.hours);
@@ -60,7 +67,7 @@ export async function fetchHourlyData(
 
 export async function fetchDailyChartData(
   params?: MetricsParams
-): Promise<ChartData[]> {
+): Promise<DailyChartResponse[]> {
   const searchParams = new URLSearchParams();
 
   if (params?.days) searchParams.append("days", params.days);
@@ -81,7 +88,7 @@ export async function fetchDailyChartData(
 
 export async function fetchDailyTierData(
   params?: MetricsParams
-): Promise<TierData[]> {
+): Promise<TierResponse[]> {
   const searchParams = new URLSearchParams();
 
   if (params?.days) searchParams.append("days", params.days);
@@ -101,7 +108,7 @@ export async function fetchDailyTierData(
 
 export async function fetchHourlyTierData(
   params?: MetricsParams
-): Promise<TierData[]> {
+): Promise<TierResponse[]> {
   const searchParams = new URLSearchParams();
 
   if (params?.hours) searchParams.append("hours", params.hours);

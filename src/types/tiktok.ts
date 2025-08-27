@@ -36,6 +36,7 @@ export interface DailyMetricsResponse {
   gte1m: number;
 }
 
+// 차트에서 사용하는 변환된 타입들
 export interface ChartData {
   date: string;
   uploads: number;
@@ -52,6 +53,25 @@ export interface TierData {
   tier: string;
   uploads: number;
   averageViews: number;
+}
+
+// API 응답 타입들
+export interface DailyChartResponse {
+  day: string;
+  dailyUploads: number;
+  dailyViewsAvg: number;
+}
+
+export interface HourlyChartResponse {
+  hour: string;
+  hourlyUploads: number;
+  hourlyViewsAvg: number;
+}
+
+export interface TierResponse {
+  tier: string;
+  uploads: number;
+  viewsAvg: number;
 }
 
 export interface ExplodedContent {

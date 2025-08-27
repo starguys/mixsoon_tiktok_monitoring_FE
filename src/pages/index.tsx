@@ -16,12 +16,14 @@ import {
   fetchHourlyTierData,
   fetchExplodedContents,
 } from "../api/metrics";
-import { mockTierData } from "../data/mockData";
 import {
   TimeFilter,
   LanguageFilter,
   TierFilter,
-  HourlyData,
+  ExplodedContent,
+  DailyChartResponse,
+  HourlyChartResponse,
+  TierResponse,
 } from "../types/tiktok";
 
 export default function Dashboard() {
@@ -103,7 +105,14 @@ export default function Dashboard() {
       if (newTierFilter !== tierFilter) setTierFilter(newTierFilter);
       if (newPage !== currentPage) setCurrentPage(newPage);
     }
-  }, [router.isReady, router.query]);
+  }, [
+    router.isReady,
+    router.query,
+    timeFilter,
+    languageFilter,
+    tierFilter,
+    currentPage,
+  ]);
 
   // 시간 단위 여부 확인
   const isHourly = ["72", "48", "24"].includes(timeFilter);
@@ -129,7 +138,7 @@ export default function Dashboard() {
   });
 
   // 시간별 차트 데이터 가져오기
-  const { data: hourlyChartData, isLoading: hourlyChartLoading } = useQuery({
+  const { data: hourlyChartData } = useQuery({
     queryKey: ["hourlyChartData", timeFilter, languageFilter, tierFilter],
     queryFn: () => {
       return fetchHourlyData({
@@ -142,7 +151,7 @@ export default function Dashboard() {
   });
 
   // 일별 차트 데이터 가져오기
-  const { data: dailyChartData, isLoading: dailyChartLoading } = useQuery({
+  const { data: dailyChartData } = useQuery({
     queryKey: ["dailyChartData", timeFilter, languageFilter, tierFilter],
     queryFn: () => {
       return fetchDailyChartData({
@@ -155,7 +164,7 @@ export default function Dashboard() {
   });
 
   // 일별 티어 데이터 가져오기
-  const { data: dailyTierData, isLoading: dailyTierLoading } = useQuery({
+  const { data: dailyTierData } = useQuery({
     queryKey: ["dailyTierData", timeFilter, languageFilter],
     queryFn: () => {
       return fetchDailyTierData({
@@ -167,7 +176,7 @@ export default function Dashboard() {
   });
 
   // 시간별 티어 데이터 가져오기
-  const { data: hourlyTierData, isLoading: hourlyTierLoading } = useQuery({
+  const { data: hourlyTierData } = useQuery({
     queryKey: ["hourlyTierData", timeFilter, languageFilter],
     queryFn: () => {
       return fetchHourlyTierData({
@@ -184,15 +193,6 @@ export default function Dashboard() {
       queryKey: ["explodedContents", currentPage],
       queryFn: () => fetchExplodedContents(currentPage, 9),
     });
-
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
 
   // 에러 상태 처리
   if (error) {
@@ -328,48 +328,32 @@ export default function Dashboard() {
             <ChartSection
               chartData={
                 isHourly
-                  ? []
-                  : (dailyChartData || []).map(
-                      (item: {
-                        day: string;
-                        dailyUploads: number;
-                        dailyViewsAvg: number;
-                      }) => ({
-                        date: item.day,
-                        uploads: item.dailyUploads,
-                        averageViews: item.dailyViewsAvg,
+                  ? (hourlyChartData || []).map(
+                      (item: HourlyChartResponse) => ({
+                        date: item.hour,
+                        uploads: item.hourlyUploads,
+                        averageViews: item.hourlyViewsAvg,
                       })
                     )
+                  : (dailyChartData || []).map((item: DailyChartResponse) => ({
+                      date: item.day,
+                      uploads: item.dailyUploads,
+                      averageViews: item.dailyViewsAvg,
+                    }))
               }
               tierData={
                 isHourly
-                  ? (hourlyTierData || []).map(
-                      (item: {
-                        tier: string;
-                        uploads: number;
-                        viewsAvg: number;
-                      }) => ({
-                        tier: item.tier,
-                        uploads: item.uploads,
-                        averageViews: item.viewsAvg,
-                      })
-                    )
-                  : (dailyTierData || []).map(
-                      (item: {
-                        tier: string;
-                        uploads: number;
-                        viewsAvg: number;
-                      }) => ({
-                        tier: item.tier,
-                        uploads: item.uploads,
-                        averageViews: item.viewsAvg,
-                      })
-                    )
+                  ? (hourlyTierData || []).map((item: TierResponse) => ({
+                      tier: item.tier,
+                      uploads: item.uploads,
+                      averageViews: item.viewsAvg,
+                    }))
+                  : (dailyTierData || []).map((item: TierResponse) => ({
+                      tier: item.tier,
+                      uploads: item.uploads,
+                      averageViews: item.viewsAvg,
+                    }))
               }
-              hourlyData={hourlyChartData?.sort(
-                (a, b) =>
-                  new Date(a.hour).getTime() - new Date(b.hour).getTime()
-              )}
               isHourly={isHourly}
             />
           </div>
@@ -399,12 +383,14 @@ export default function Dashboard() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {explodedContentsData?.content.map((content) => (
-                    <ExplodedContentCard
-                      key={content.contentId}
-                      content={content}
-                    />
-                  ))}
+                  {explodedContentsData?.content.map(
+                    (content: ExplodedContent) => (
+                      <ExplodedContentCard
+                        key={content.contentId}
+                        content={content}
+                      />
+                    )
+                  )}
                 </div>
 
                 {explodedContentsData && (
