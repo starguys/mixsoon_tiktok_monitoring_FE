@@ -78,3 +78,43 @@ export async function fetchDailyChartData(
 
   return response.json();
 }
+
+export async function fetchDailyTierData(
+  params?: MetricsParams
+): Promise<TierData[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.days) searchParams.append("days", params.days);
+  if (params?.language) searchParams.append("language", params.language);
+
+  const url = `/api/metrics/daily/tier${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`API 호출 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchHourlyTierData(
+  params?: MetricsParams
+): Promise<TierData[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.hours) searchParams.append("hours", params.hours);
+  if (params?.language) searchParams.append("language", params.language);
+
+  const url = `/api/metrics/hourly/tier${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`API 호출 실패: ${response.status}`);
+  }
+
+  return response.json();
+}

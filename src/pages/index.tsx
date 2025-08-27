@@ -10,6 +10,8 @@ import {
   fetchDailyMetrics,
   fetchHourlyData,
   fetchDailyChartData,
+  fetchDailyTierData,
+  fetchHourlyTierData,
 } from "../api/metrics";
 import { mockTierData, mockTikTokContents } from "../data/mockData";
 import {
@@ -73,6 +75,30 @@ export default function Dashboard() {
     enabled: !isHourly,
   });
 
+  // 일별 티어 데이터 가져오기
+  const { data: dailyTierData, isLoading: dailyTierLoading } = useQuery({
+    queryKey: ["dailyTierData", timeFilter, languageFilter],
+    queryFn: () => {
+      return fetchDailyTierData({
+        days: timeFilter === "ALL" ? undefined : timeFilter,
+        language: languageFilter === "ALL" ? undefined : languageFilter,
+      });
+    },
+    enabled: !isHourly,
+  });
+
+  // 시간별 티어 데이터 가져오기
+  const { data: hourlyTierData, isLoading: hourlyTierLoading } = useQuery({
+    queryKey: ["hourlyTierData", timeFilter, languageFilter],
+    queryFn: () => {
+      return fetchHourlyTierData({
+        hours: timeFilter === "ALL" ? undefined : timeFilter,
+        language: languageFilter === "ALL" ? undefined : languageFilter,
+      });
+    },
+    enabled: isHourly,
+  });
+
   // 터진 콘텐츠만 필터링 (exploded_bucket이 있는 것들)
   const explodedContents = mockTikTokContents.filter(
     (content) => content.exploded_bucket
@@ -117,18 +143,22 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* 필터 바 - Sticky */}
+      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <FilterBar
+            timeFilter={timeFilter}
+            languageFilter={languageFilter}
+            tierFilter={tierFilter}
+            onTimeFilterChange={setTimeFilter}
+            onLanguageFilterChange={setLanguageFilter}
+            onTierFilterChange={setTierFilter}
+          />
+        </div>
+      </div>
+
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 필터 바 */}
-        <FilterBar
-          timeFilter={timeFilter}
-          languageFilter={languageFilter}
-          tierFilter={tierFilter}
-          onTimeFilterChange={setTimeFilter}
-          onLanguageFilterChange={setLanguageFilter}
-          onTierFilterChange={setTierFilter}
-        />
-
         {/* KPI 카드 섹션 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="lg:col-span-3"></div>
@@ -230,7 +260,31 @@ export default function Dashboard() {
                       })
                     )
               }
-              tierData={mockTierData}
+              tierData={
+                isHourly
+                  ? (hourlyTierData || []).map(
+                      (item: {
+                        tier: string;
+                        uploads: number;
+                        viewsAvg: number;
+                      }) => ({
+                        tier: item.tier,
+                        uploads: item.uploads,
+                        averageViews: item.viewsAvg,
+                      })
+                    )
+                  : (dailyTierData || []).map(
+                      (item: {
+                        tier: string;
+                        uploads: number;
+                        viewsAvg: number;
+                      }) => ({
+                        tier: item.tier,
+                        uploads: item.uploads,
+                        averageViews: item.viewsAvg,
+                      })
+                    )
+              }
               hourlyData={hourlyChartData?.sort(
                 (a, b) =>
                   new Date(a.hour).getTime() - new Date(b.hour).getTime()

@@ -47,7 +47,7 @@ export function FilterBar({
   ];
 
   return (
-    <div className="flex gap-4 mb-6">
+    <div className="flex gap-4">
       <div className="flex items-center gap-2">
         <label className="text-sm font-medium text-gray-700">기간:</label>
         <Select.Root
