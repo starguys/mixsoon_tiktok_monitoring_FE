@@ -12,14 +12,26 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
-import { ChartData, TierData } from "../types/tiktok";
+import {
+  ChartData,
+  TierData,
+  HourlyData,
+  DailyMetricsResponse,
+} from "../types/tiktok";
 
 interface ChartSectionProps {
   chartData: ChartData[];
   tierData: TierData[];
+  hourlyData?: HourlyData[];
+  isHourly?: boolean;
 }
 
-export function ChartSection({ chartData, tierData }: ChartSectionProps) {
+export function ChartSection({
+  chartData,
+  tierData,
+  hourlyData,
+  isHourly,
+}: ChartSectionProps) {
   const formatViews = (value: number) => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`;
@@ -31,9 +43,26 @@ export function ChartSection({ chartData, tierData }: ChartSectionProps) {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const formatTime = (timeStr: string) => {
+        if (isHourly) {
+          return new Date(timeStr).toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        return new Date(timeStr).toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      };
+
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium">{label}</p>
+          <p className="font-medium">{formatTime(label)}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }}>
               {entry.name}: {entry.value}
@@ -47,7 +76,7 @@ export function ChartSection({ chartData, tierData }: ChartSectionProps) {
 
   return (
     <div className="space-y-6">
-      {/* 일별 업로드수 + 평균조회수 차트 */}
+      {/* 시간별/일별 업로드수 + 평균조회수 차트 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           일별 업로드수 및 평균 조회수
@@ -57,12 +86,12 @@ export function ChartSection({ chartData, tierData }: ChartSectionProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) =>
-                new Date(value).toLocaleDateString("ko-KR", {
+              tickFormatter={(value) => {
+                return new Date(value).toLocaleDateString("ko-KR", {
                   month: "short",
                   day: "numeric",
-                })
-              }
+                });
+              }}
             />
             <YAxis yAxisId="left" />
             <YAxis yAxisId="right" orientation="right" />
@@ -70,7 +99,7 @@ export function ChartSection({ chartData, tierData }: ChartSectionProps) {
             <Legend />
             <Bar
               yAxisId="left"
-              dataKey="uploads"
+              dataKey={isHourly ? "hourlyUploads" : "uploads"}
               fill="#3B82F6"
               name="업로드 수"
               radius={[4, 4, 0, 0]}
@@ -78,7 +107,7 @@ export function ChartSection({ chartData, tierData }: ChartSectionProps) {
             <Line
               yAxisId="right"
               type="monotone"
-              dataKey="averageViews"
+              dataKey={isHourly ? "hourlyViewsAvg" : "averageViews"}
               stroke="#EF4444"
               strokeWidth={2}
               name="평균 조회수"

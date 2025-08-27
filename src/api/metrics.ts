@@ -36,3 +36,45 @@ export async function fetchDailyMetrics(
 
   return response.json();
 }
+
+export async function fetchHourlyData(
+  params?: MetricsParams
+): Promise<HourlyData[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.hours) searchParams.append("hours", params.hours);
+  if (params?.tier) searchParams.append("tier", params.tier);
+  if (params?.language) searchParams.append("language", params.language);
+
+  const url = `/api/metrics/hourly${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`API 호출 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchDailyChartData(
+  params?: MetricsParams
+): Promise<ChartData[]> {
+  const searchParams = new URLSearchParams();
+
+  if (params?.days) searchParams.append("days", params.days);
+  if (params?.tier) searchParams.append("tier", params.tier);
+  if (params?.language) searchParams.append("language", params.language);
+
+  const url = `/api/metrics/daily${
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
+  }`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`API 호출 실패: ${response.status}`);
+  }
+
+  return response.json();
+}

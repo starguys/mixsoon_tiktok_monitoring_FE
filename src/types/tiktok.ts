@@ -26,10 +26,26 @@ export interface KPIData {
   explodedContent: number;
 }
 
+export interface DailyMetricsResponse {
+  uploads: number;
+  prFree: number;
+  prPaid: number;
+  viewsAvg: number;
+  gte10k: number;
+  gte100k: number;
+  gte1m: number;
+}
+
 export interface ChartData {
   date: string;
   uploads: number;
   averageViews: number;
+}
+
+export interface HourlyData {
+  hour: string;
+  hourlyUploads: number;
+  hourlyViewsAvg: number;
 }
 
 export interface TierData {

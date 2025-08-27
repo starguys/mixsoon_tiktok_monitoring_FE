@@ -117,24 +117,6 @@ export const mockTikTokContents: TikTokContent[] = [
   },
 ];
 
-export const mockKPIData: KPIData = {
-  totalUploads: 156,
-  freeSponsorships: 45,
-  paidSponsorships: 23,
-  averageViews: 125000,
-  explodedContent: 12,
-};
-
-export const mockChartData: ChartData[] = [
-  { date: "2025-08-10", uploads: 12, averageViews: 98000 },
-  { date: "2025-08-11", uploads: 15, averageViews: 110000 },
-  { date: "2025-08-12", uploads: 18, averageViews: 135000 },
-  { date: "2025-08-13", uploads: 14, averageViews: 120000 },
-  { date: "2025-08-14", uploads: 20, averageViews: 150000 },
-  { date: "2025-08-15", uploads: 16, averageViews: 140000 },
-  { date: "2025-08-16", uploads: 22, averageViews: 160000 },
-];
-
 export const mockTierData: TierData[] = [
   { tier: "나노", uploads: 45, averageViews: 25000 },
   { tier: "마이크로", uploads: 38, averageViews: 85000 },

@@ -6,18 +6,26 @@ import { FilterBar } from "../components/FilterBar";
 import { ChartSection } from "../components/ChartSection";
 import { ExplodedContentCard } from "../components/ExplodedContentCard";
 import { SkeletonCard } from "../components/SkeletonCard";
-import { fetchDailyMetrics } from "../api/metrics";
 import {
-  mockChartData,
-  mockTierData,
-  mockTikTokContents,
-} from "../data/mockData";
-import { TimeFilter, LanguageFilter, TierFilter } from "../types/tiktok";
+  fetchDailyMetrics,
+  fetchHourlyData,
+  fetchDailyChartData,
+} from "../api/metrics";
+import { mockTierData, mockTikTokContents } from "../data/mockData";
+import {
+  TimeFilter,
+  LanguageFilter,
+  TierFilter,
+  HourlyData,
+} from "../types/tiktok";
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
   const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("ALL");
   const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
+
+  // 시간 단위 여부 확인
+  const isHourly = ["72", "48", "24"].includes(timeFilter);
 
   // API 데이터 가져오기
   const {
@@ -27,16 +35,42 @@ export default function Dashboard() {
   } = useQuery({
     queryKey: ["dailyMetrics", timeFilter, languageFilter, tierFilter],
     queryFn: () => {
-      const isHourly = ["72", "48", "24"].includes(timeFilter);
-
       return fetchDailyMetrics({
         days:
           timeFilter === "ALL" ? undefined : isHourly ? undefined : timeFilter,
-        hours: isHourly ? timeFilter : undefined,
+        hours:
+          timeFilter === "ALL" ? undefined : isHourly ? timeFilter : undefined,
         language: languageFilter === "ALL" ? undefined : languageFilter,
         tier: tierFilter === "ALL" ? undefined : tierFilter,
       });
     },
+    enabled: true, // 항상 호출
+  });
+
+  // 시간별 차트 데이터 가져오기
+  const { data: hourlyChartData, isLoading: hourlyChartLoading } = useQuery({
+    queryKey: ["hourlyChartData", timeFilter, languageFilter, tierFilter],
+    queryFn: () => {
+      return fetchHourlyData({
+        hours: timeFilter === "ALL" ? undefined : timeFilter,
+        language: languageFilter === "ALL" ? undefined : languageFilter,
+        tier: tierFilter === "ALL" ? undefined : tierFilter,
+      });
+    },
+    enabled: isHourly,
+  });
+
+  // 일별 차트 데이터 가져오기
+  const { data: dailyChartData, isLoading: dailyChartLoading } = useQuery({
+    queryKey: ["dailyChartData", timeFilter, languageFilter, tierFilter],
+    queryFn: () => {
+      return fetchDailyChartData({
+        days: timeFilter === "ALL" ? undefined : timeFilter,
+        language: languageFilter === "ALL" ? undefined : languageFilter,
+        tier: tierFilter === "ALL" ? undefined : tierFilter,
+      });
+    },
+    enabled: !isHourly,
   });
 
   // 터진 콘텐츠만 필터링 (exploded_bucket이 있는 것들)
@@ -180,7 +214,29 @@ export default function Dashboard() {
         {/* 차트 섹션 */}
         {!isLoading && (
           <div className="mb-8">
-            <ChartSection chartData={mockChartData} tierData={mockTierData} />
+            <ChartSection
+              chartData={
+                isHourly
+                  ? []
+                  : (dailyChartData || []).map(
+                      (item: {
+                        day: string;
+                        dailyUploads: number;
+                        dailyViewsAvg: number;
+                      }) => ({
+                        date: item.day,
+                        uploads: item.dailyUploads,
+                        averageViews: item.dailyViewsAvg,
+                      })
+                    )
+              }
+              tierData={mockTierData}
+              hourlyData={hourlyChartData?.sort(
+                (a, b) =>
+                  new Date(a.hour).getTime() - new Date(b.hour).getTime()
+              )}
+              isHourly={isHourly}
+            />
           </div>
         )}
 
