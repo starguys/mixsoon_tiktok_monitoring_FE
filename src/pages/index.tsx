@@ -1,115 +1,136 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import React, { useState } from "react";
+import { Upload, Gift, DollarSign, Eye, TrendingUp, Zap } from "lucide-react";
+import { KPICard } from "../components/KPICard";
+import { FilterBar } from "../components/FilterBar";
+import { ChartSection } from "../components/ChartSection";
+import { ExplodedContentCard } from "../components/ExplodedContentCard";
+import {
+  mockKPIData,
+  mockChartData,
+  mockTierData,
+  mockTikTokContents,
+} from "../data/mockData";
+import { TimeFilter, LanguageFilter } from "../types/tiktok";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+export default function Dashboard() {
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("all");
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  // 터진 콘텐츠만 필터링 (exploded_bucket이 있는 것들)
+  const explodedContents = mockTikTokContents.filter(
+    (content) => content.exploded_bucket
+  );
 
-export default function Home() {
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                TikTok 모니터링 대시보드
+              </h1>
+              <p className="text-sm text-gray-600">
+                시딩한 컨텐츠들의 퍼포먼스 모니터링 & 트래킹
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">마지막 업데이트</p>
+              <p className="text-sm font-medium text-gray-900">
+                {new Date().toLocaleString("ko-KR")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* 메인 컨텐츠 */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 필터 바 */}
+        <FilterBar
+          timeFilter={timeFilter}
+          languageFilter={languageFilter}
+          onTimeFilterChange={setTimeFilter}
+          onLanguageFilterChange={setLanguageFilter}
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+        {/* KPI 카드 섹션 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <KPICard
+            title="업로드 갯수"
+            value={mockKPIData.totalUploads}
+            icon={Upload}
+            trend={{ value: 12, isPositive: true }}
+            description="선택된 기간 동안의 총 업로드 수"
+          />
+          <KPICard
+            title="무료 협찬수"
+            value={mockKPIData.freeSponsorships}
+            icon={Gift}
+            trend={{ value: 8, isPositive: true }}
+            description="무료 제품 제공 협찬 콘텐츠"
+          />
+          <KPICard
+            title="유료 협찬수"
+            value={mockKPIData.paidSponsorships}
+            icon={DollarSign}
+            trend={{ value: 15, isPositive: true }}
+            description="유료 협찬 콘텐츠"
+          />
+          <KPICard
+            title="평균 조회수"
+            value={formatNumber(mockKPIData.averageViews)}
+            icon={Eye}
+            trend={{ value: 5, isPositive: true }}
+            description="전체 콘텐츠의 평균 조회수"
+          />
+          <KPICard
+            title="터진 콘텐츠수"
+            value={mockKPIData.explodedContent}
+            icon={Zap}
+            trend={{ value: 25, isPositive: true }}
+            description="10K, 100K, 1M 이상 조회수 콘텐츠"
+          />
+          <KPICard
+            title="성장률"
+            value="+18.5%"
+            icon={TrendingUp}
+            trend={{ value: 18.5, isPositive: true }}
+            description="전월 대비 성장률"
+          />
+        </div>
+
+        {/* 차트 섹션 */}
+        <div className="mb-8">
+          <ChartSection chartData={mockChartData} tierData={mockTierData} />
+        </div>
+
+        {/* 터진 콘텐츠 섹션 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">터진 콘텐츠</h3>
+            <p className="text-sm text-gray-600">
+              총 {explodedContents.length}개의 터진 콘텐츠
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {explodedContents.map((content) => (
+              <ExplodedContentCard key={content.content_id} content={content} />
+            ))}
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
