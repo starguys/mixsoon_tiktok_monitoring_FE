@@ -54,6 +54,26 @@ export interface TierData {
   averageViews: number;
 }
 
+export interface ExplodedContent {
+  contentId: string;
+  thumbnailUrl: string;
+  url: string;
+  caption: string;
+  views: number;
+  likes: number;
+  createdAt: string;
+}
+
+export interface ExplodedContentResponse {
+  content: ExplodedContent[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
 export type TimeFilter = "ALL" | "1" | "7" | "30" | "365" | "72" | "48" | "24";
 export type LanguageFilter = "ALL" | "en" | "es" | "ko";
 export type TierFilter = "ALL" | "NANO" | "MICRO" | "MID" | "MEGA";

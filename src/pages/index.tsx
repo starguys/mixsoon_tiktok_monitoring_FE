@@ -1,19 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, Gift, DollarSign, Eye, Zap } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/router";
 import { KPICard } from "../components/KPICard";
 import { FilterBar } from "../components/FilterBar";
 import { ChartSection } from "../components/ChartSection";
 import { ExplodedContentCard } from "../components/ExplodedContentCard";
 import { SkeletonCard } from "../components/SkeletonCard";
+import { Pagination } from "../components/Pagination";
 import {
   fetchDailyMetrics,
   fetchHourlyData,
   fetchDailyChartData,
   fetchDailyTierData,
   fetchHourlyTierData,
+  fetchExplodedContents,
 } from "../api/metrics";
-import { mockTierData, mockTikTokContents } from "../data/mockData";
+import { mockTierData } from "../data/mockData";
 import {
   TimeFilter,
   LanguageFilter,
@@ -22,9 +25,85 @@ import {
 } from "../types/tiktok";
 
 export default function Dashboard() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("ALL");
-  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>("ALL");
-  const [tierFilter, setTierFilter] = useState<TierFilter>("ALL");
+  const router = useRouter();
+
+  // URL 쿼리스트링에서 초기값 가져오기
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(
+    (router.query.time as TimeFilter) || "ALL"
+  );
+  const [languageFilter, setLanguageFilter] = useState<LanguageFilter>(
+    (router.query.language as LanguageFilter) || "ALL"
+  );
+  const [tierFilter, setTierFilter] = useState<TierFilter>(
+    (router.query.tier as TierFilter) || "ALL"
+  );
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(router.query.page as string) || 0
+  );
+
+  // URL 업데이트 함수
+  const updateURL = (updates: Record<string, string | number>) => {
+    const newQuery = { ...router.query, ...updates };
+
+    // "ALL" 값인 경우 쿼리에서 제거
+    Object.keys(newQuery).forEach((key) => {
+      if (newQuery[key] === "ALL") {
+        delete newQuery[key];
+      }
+    });
+
+    // 페이지가 0인 경우 쿼리에서 제거
+    if (newQuery.page === 0) {
+      delete newQuery.page;
+    }
+
+    router.push(
+      {
+        pathname: router.pathname,
+        query: newQuery,
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
+
+  // 필터 변경 핸들러들
+  const handleTimeFilterChange = (filter: TimeFilter) => {
+    setTimeFilter(filter);
+    updateURL({ time: filter, page: 0 }); // 기간 변경 시 페이지 초기화
+  };
+
+  const handleLanguageFilterChange = (filter: LanguageFilter) => {
+    setLanguageFilter(filter);
+    updateURL({ language: filter, page: 0 }); // 언어 변경 시 페이지 초기화
+  };
+
+  const handleTierFilterChange = (filter: TierFilter) => {
+    setTierFilter(filter);
+    updateURL({ tier: filter, page: 0 }); // 티어 변경 시 페이지 초기화
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL({ page });
+  };
+
+  // URL 변경 시 상태 동기화
+  useEffect(() => {
+    if (router.isReady) {
+      const newTimeFilter = (router.query.time as TimeFilter) || "ALL";
+      const newLanguageFilter =
+        (router.query.language as LanguageFilter) || "ALL";
+      const newTierFilter = (router.query.tier as TierFilter) || "ALL";
+      const newPage = parseInt(router.query.page as string) || 0;
+
+      if (newTimeFilter !== timeFilter) setTimeFilter(newTimeFilter);
+      if (newLanguageFilter !== languageFilter)
+        setLanguageFilter(newLanguageFilter);
+      if (newTierFilter !== tierFilter) setTierFilter(newTierFilter);
+      if (newPage !== currentPage) setCurrentPage(newPage);
+    }
+  }, [router.isReady, router.query]);
 
   // 시간 단위 여부 확인
   const isHourly = ["72", "48", "24"].includes(timeFilter);
@@ -99,10 +178,12 @@ export default function Dashboard() {
     enabled: isHourly,
   });
 
-  // 터진 콘텐츠만 필터링 (exploded_bucket이 있는 것들)
-  const explodedContents = mockTikTokContents.filter(
-    (content) => content.exploded_bucket
-  );
+  // 터진 콘텐츠 데이터 가져오기
+  const { data: explodedContentsData, isLoading: explodedContentsLoading } =
+    useQuery({
+      queryKey: ["explodedContents", currentPage],
+      queryFn: () => fetchExplodedContents(currentPage, 9),
+    });
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -144,15 +225,15 @@ export default function Dashboard() {
       </header>
 
       {/* 필터 바 - Sticky */}
-      <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-50 bg-gray-50 border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <FilterBar
             timeFilter={timeFilter}
             languageFilter={languageFilter}
             tierFilter={tierFilter}
-            onTimeFilterChange={setTimeFilter}
-            onLanguageFilterChange={setLanguageFilter}
-            onTierFilterChange={setTierFilter}
+            onTimeFilterChange={handleTimeFilterChange}
+            onLanguageFilterChange={handleLanguageFilterChange}
+            onTierFilterChange={handleTierFilterChange}
           />
         </div>
       </div>
@@ -302,18 +383,39 @@ export default function Dashboard() {
                 터진 콘텐츠
               </h3>
               <p className="text-sm text-gray-600">
-                총 {explodedContents.length}개의 터진 콘텐츠
+                총 {explodedContentsData?.totalElements || 0}개의 터진 콘텐츠
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {explodedContents.map((content) => (
-                <ExplodedContentCard
-                  key={content.content_id}
-                  content={content}
-                />
-              ))}
-            </div>
+            {explodedContentsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 9 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 rounded-lg h-64 animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {explodedContentsData?.content.map((content) => (
+                    <ExplodedContentCard
+                      key={content.contentId}
+                      content={content}
+                    />
+                  ))}
+                </div>
+
+                {explodedContentsData && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={explodedContentsData.totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+              </>
+            )}
           </div>
         )}
       </main>

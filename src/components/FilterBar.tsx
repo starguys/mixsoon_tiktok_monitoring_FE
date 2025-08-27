@@ -6,10 +6,10 @@ import { TimeFilter, LanguageFilter, TierFilter } from "../types/tiktok";
 interface FilterBarProps {
   timeFilter: TimeFilter;
   languageFilter: LanguageFilter;
-  tierFilter: TierFilter | null;
+  tierFilter: TierFilter;
   onTimeFilterChange: (filter: TimeFilter) => void;
   onLanguageFilterChange: (filter: LanguageFilter) => void;
-  onTierFilterChange: (filter: TierFilter | null) => void;
+  onTierFilterChange: (filter: TierFilter) => void;
 }
 
 export function FilterBar({
@@ -61,7 +61,7 @@ export function FilterBar({
             </Select.Icon>
           </Select.Trigger>
           <Select.Portal>
-            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200">
+            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200 z-[9999]">
               <Select.Viewport className="p-1">
                 {timeOptions.map((option) => (
                   <Select.Item
@@ -93,7 +93,7 @@ export function FilterBar({
             </Select.Icon>
           </Select.Trigger>
           <Select.Portal>
-            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200">
+            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200 z-[9999]">
               <Select.Viewport className="p-1">
                 {languageOptions.map((option) => (
                   <Select.Item
@@ -123,7 +123,7 @@ export function FilterBar({
             </Select.Icon>
           </Select.Trigger>
           <Select.Portal>
-            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200">
+            <Select.Content className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200 z-[9999]">
               <Select.Viewport className="p-1">
                 {tierOptions.map((option) => (
                   <Select.Item

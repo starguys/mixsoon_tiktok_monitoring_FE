@@ -118,3 +118,17 @@ export async function fetchHourlyTierData(
 
   return response.json();
 }
+
+export async function fetchExplodedContents(
+  page: number = 0,
+  size: number = 9
+): Promise<ExplodedContentResponse> {
+  const url = `/api/contents?page=${page}&size=${size}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`API 호출 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
