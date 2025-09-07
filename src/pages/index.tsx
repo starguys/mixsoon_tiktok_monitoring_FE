@@ -24,6 +24,7 @@ import {
   DailyChartResponse,
   HourlyChartResponse,
   TierResponse,
+  DailyMetricsResponse,
 } from "../types/tiktok";
 
 export default function Dashboard() {
@@ -122,7 +123,7 @@ export default function Dashboard() {
     data: metricsData,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<DailyMetricsResponse>({
     queryKey: ["dailyMetrics", timeFilter, languageFilter, tierFilter],
     queryFn: () => {
       return fetchDailyMetrics({
@@ -190,8 +191,30 @@ export default function Dashboard() {
   // 터진 콘텐츠 데이터 가져오기
   const { data: explodedContentsData, isLoading: explodedContentsLoading } =
     useQuery({
-      queryKey: ["explodedContents", currentPage],
-      queryFn: () => fetchExplodedContents(currentPage, 9),
+      queryKey: [
+        "explodedContents",
+        currentPage,
+        timeFilter,
+        languageFilter,
+        tierFilter,
+      ],
+      queryFn: () =>
+        fetchExplodedContents(currentPage, 9, {
+          days:
+            timeFilter === "ALL"
+              ? undefined
+              : isHourly
+              ? undefined
+              : timeFilter,
+          hours:
+            timeFilter === "ALL"
+              ? undefined
+              : isHourly
+              ? timeFilter
+              : undefined,
+          language: languageFilter === "ALL" ? undefined : languageFilter,
+          tier: tierFilter === "ALL" ? undefined : tierFilter,
+        }),
     });
 
   // 에러 상태 처리
@@ -257,28 +280,50 @@ export default function Dashboard() {
                 title="업로드 갯수"
                 value={metricsData?.uploads || 0}
                 icon={Upload}
-                trend={{ value: 12, isPositive: true }}
+                trend={{
+                  value: metricsData?.uploadsPercentageChange
+                    ? parseFloat(metricsData.uploadsPercentageChange.toFixed(2))
+                    : 0,
+                  isPositive: (metricsData?.uploadsPercentageChange || 0) >= 0,
+                }}
                 description="선택된 기간 동안의 총 업로드 수"
               />
               <KPICard
                 title="무료 협찬수"
                 value={metricsData?.prFree || 0}
                 icon={Gift}
-                trend={{ value: 8, isPositive: true }}
+                trend={{
+                  value: metricsData?.prFreePercentageChange
+                    ? parseFloat(metricsData.prFreePercentageChange.toFixed(2))
+                    : 0,
+                  isPositive: (metricsData?.prFreePercentageChange || 0) >= 0,
+                }}
                 description="무료 제품 제공 협찬 콘텐츠"
               />
               <KPICard
                 title="유료 협찬수"
                 value={metricsData?.prPaid || 0}
                 icon={DollarSign}
-                trend={{ value: 15, isPositive: true }}
+                trend={{
+                  value: metricsData?.prPaidPercentageChange
+                    ? parseFloat(metricsData.prPaidPercentageChange.toFixed(2))
+                    : 0,
+                  isPositive: (metricsData?.prPaidPercentageChange || 0) >= 0,
+                }}
                 description="유료 협찬 콘텐츠"
               />
               <KPICard
                 title="평균 조회수"
                 value={metricsData?.viewsAvg?.toLocaleString() || "0"}
                 icon={Eye}
-                trend={{ value: 5, isPositive: true }}
+                trend={{
+                  value: metricsData?.viewsAvgPercentageChange
+                    ? parseFloat(
+                        metricsData.viewsAvgPercentageChange.toFixed(2)
+                      )
+                    : 0,
+                  isPositive: (metricsData?.viewsAvgPercentageChange || 0) >= 0,
+                }}
                 description="전체 콘텐츠의 평균 조회수"
               />
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -382,23 +427,51 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {explodedContentsData?.content.map(
-                    (content: ExplodedContent) => (
-                      <ExplodedContentCard
-                        key={content.contentId}
-                        content={content}
-                      />
-                    )
-                  )}
-                </div>
+                {explodedContentsData?.content &&
+                explodedContentsData.content.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {explodedContentsData.content.map(
+                        (content: ExplodedContent) => (
+                          <ExplodedContentCard
+                            key={content.contentId}
+                            content={content}
+                          />
+                        )
+                      )}
+                    </div>
 
-                {explodedContentsData && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={explodedContentsData.totalPages}
-                    onPageChange={handlePageChange}
-                  />
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={explodedContentsData.totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <svg
+                        className="w-16 h-16 mx-auto"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Data
+                    </h3>
+                    <p className="text-sm text-gray-500 text-center">
+                      선택한 필터 조건에 맞는 터진 콘텐츠가 없습니다.
+                    </p>
+                  </div>
                 )}
               </>
             )}

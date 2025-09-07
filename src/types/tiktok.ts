@@ -28,9 +28,13 @@ export interface KPIData {
 
 export interface DailyMetricsResponse {
   uploads: number;
+  uploadsPercentageChange: number;
   prFree: number;
+  prFreePercentageChange: number;
   prPaid: number;
+  prPaidPercentageChange: number;
   viewsAvg: number;
+  viewsAvgPercentageChange: number;
   gte10k: number;
   gte100k: number;
   gte1m: number;

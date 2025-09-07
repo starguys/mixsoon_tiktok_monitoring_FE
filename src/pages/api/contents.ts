@@ -10,9 +10,19 @@ export default async function handler(
   }
 
   try {
-    const { page = "0", size = "9" } = req.query;
+    const { page = "0", size = "9", days, hours, tier, language } = req.query;
 
-    const url = `https://www.mixsoon-tiktok-monitoring.site/api/contents?page=${page}&size=${size}`;
+    // 쿼리 파라미터 구성
+    const searchParams = new URLSearchParams();
+    searchParams.append("page", page as string);
+    searchParams.append("size", size as string);
+
+    if (days) searchParams.append("days", days as string);
+    if (hours) searchParams.append("hours", hours as string);
+    if (tier) searchParams.append("tier", tier as string);
+    if (language) searchParams.append("language", language as string);
+
+    const url = `https://www.mixsoon-tiktok-monitoring.site/api/contents?${searchParams.toString()}`;
 
     const response = await fetch(url);
     if (!response.ok) {

@@ -3,17 +3,8 @@ import {
   DailyChartResponse,
   TierResponse,
   ExplodedContentResponse,
+  DailyMetricsResponse,
 } from "../types/tiktok";
-
-export interface DailyMetricsResponse {
-  uploads: number;
-  prFree: number;
-  prPaid: number;
-  viewsAvg: number;
-  gte10k: number;
-  gte100k: number;
-  gte1m: number;
-}
 
 interface MetricsParams {
   days?: string;
@@ -128,9 +119,20 @@ export async function fetchHourlyTierData(
 
 export async function fetchExplodedContents(
   page: number = 0,
-  size: number = 9
+  size: number = 9,
+  params?: MetricsParams
 ): Promise<ExplodedContentResponse> {
-  const url = `/api/contents?page=${page}&size=${size}`;
+  const searchParams = new URLSearchParams();
+
+  searchParams.append("page", page.toString());
+  searchParams.append("size", size.toString());
+
+  if (params?.days) searchParams.append("days", params.days);
+  if (params?.hours) searchParams.append("hours", params.hours);
+  if (params?.tier) searchParams.append("tier", params.tier);
+  if (params?.language) searchParams.append("language", params.language);
+
+  const url = `/api/contents?${searchParams.toString()}`;
   const response = await fetch(url);
 
   if (!response.ok) {
