@@ -289,18 +289,6 @@ export default function Dashboard() {
                 description="선택된 기간 동안의 총 업로드 수"
               />
               <KPICard
-                title="무료 협찬수"
-                value={metricsData?.prFree || 0}
-                icon={Gift}
-                trend={{
-                  value: metricsData?.prFreePercentageChange
-                    ? parseFloat(metricsData.prFreePercentageChange.toFixed(2))
-                    : 0,
-                  isPositive: (metricsData?.prFreePercentageChange || 0) >= 0,
-                }}
-                description="무료 제품 제공 협찬 콘텐츠"
-              />
-              <KPICard
                 title="유료 협찬수"
                 value={metricsData?.prPaid || 0}
                 icon={DollarSign}
@@ -313,18 +301,16 @@ export default function Dashboard() {
                 description="유료 협찬 콘텐츠"
               />
               <KPICard
-                title="평균 조회수"
-                value={metricsData?.viewsAvg?.toLocaleString() || "0"}
-                icon={Eye}
+                title="무료 협찬수"
+                value={metricsData?.prFree || 0}
+                icon={Gift}
                 trend={{
-                  value: metricsData?.viewsAvgPercentageChange
-                    ? parseFloat(
-                        metricsData.viewsAvgPercentageChange.toFixed(2)
-                      )
+                  value: metricsData?.prFreePercentageChange
+                    ? parseFloat(metricsData.prFreePercentageChange.toFixed(2))
                     : 0,
-                  isPositive: (metricsData?.viewsAvgPercentageChange || 0) >= 0,
+                  isPositive: (metricsData?.prFreePercentageChange || 0) >= 0,
                 }}
-                description="전체 콘텐츠의 평균 조회수"
+                description="무료 제품 제공 협찬 콘텐츠"
               />
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
@@ -363,6 +349,20 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+              <KPICard
+                title="평균 조회수"
+                value={metricsData?.viewsAvg?.toLocaleString() || "0"}
+                icon={Eye}
+                trend={{
+                  value: metricsData?.viewsAvgPercentageChange
+                    ? parseFloat(
+                        metricsData.viewsAvgPercentageChange.toFixed(2)
+                      )
+                    : 0,
+                  isPositive: (metricsData?.viewsAvgPercentageChange || 0) >= 0,
+                }}
+                description="전체 콘텐츠의 평균 조회수"
+              />
             </>
           )}
         </div>
